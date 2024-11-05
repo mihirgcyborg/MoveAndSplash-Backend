@@ -1,0 +1,103 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+// schema.prisma
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL") // Connection URL for MySQL
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// 1. Users Table
+model User {
+  id        Int       @id @default(autoincrement())
+  name      String
+  email     String    @unique
+  password  String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  bookings  Booking[]
+  payments  Payment[]
+  places    Place[]
+  reviews   Review[]
+}
+
+// 2. Places Table
+model Place {
+  id               Int       @id @default(autoincrement())
+  host             User      @relation(fields: [hostId], references: [id])
+  hostId           Int
+  name             String
+  shortDescription String
+  longDescription  String
+  media            Media[]
+  amenities        Amenity[] @relation("PlaceAmenities")
+  hourlyRate       Float
+  dailyRate        Float
+  reviews          Review[] // Reviews for the place
+  Booking          Booking[]
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+}
+
+// 3. Media Table for storing media files with optional short description
+model Media {
+  id               Int     @id @default(autoincrement())
+  place            Place   @relation(fields: [placeId], references: [id])
+  placeId          Int
+  url              String // Link to media file (image/video)
+  shortDescription String?
+}
+
+// 4. Amenities Table (for predefined amenities to select)
+model Amenity {
+  id     Int     @id @default(autoincrement())
+  name   String // e.g., "WiFi", "Parking", etc.
+  places Place[] @relation("PlaceAmenities")
+}
+
+// 6. Booking Table
+model Booking {
+  id        Int      @id @default(autoincrement())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    Int
+  place     Place    @relation(fields: [placeId], references: [id])
+  placeId   Int
+  startDate DateTime // Start date of the booking
+  endDate   DateTime // End date of the booking
+  status    String // Booking status: e.g., "confirmed", "pending", "cancelled"
+  payment   Payment? // Optional relation to payment
+  createdAt DateTime @default(now())
+}
+
+// 7. Payments Table
+model Payment {
+  id            Int      @id @default(autoincrement())
+  user          User     @relation(fields: [userId], references: [id])
+  userId        Int
+  booking       Booking  @relation(fields: [bookingId], references: [id])
+  bookingId     Int      @unique
+  amount        Float
+  paymentStatus String // E.g., "pending", "completed", "refunded"
+  transactionId String   @unique
+  paymentDate   DateTime @default(now())
+}
+
+// 8. Reviews Table
+model Review {
+  id        Int      @id @default(autoincrement())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    Int
+  place     Place    @relation(fields: [placeId], references: [id])
+  placeId   Int
+  rating    Int // Rating out of 5
+  comment   String? // Optional user comment
+  createdAt DateTime @default(now())
+}
