@@ -3,6 +3,12 @@ const jwt = require("jsonwebtoken");
 const { validationResult } = require("express-validator");
 const generateToken = require("../utils/generateToken");
 const { prisma } = require("../db/prismaClient");
+const { handleThirdPartyLogin } = require("../services/authService");
+
+const sanitizeUser = (user) => {
+  const { password, ...sanitizedUser } = user; // remove password
+  return sanitizedUser;
+};
 
 const registerUser = async (req, res) => {
   const { name, email, password } = req.body;
@@ -25,11 +31,13 @@ const registerUser = async (req, res) => {
         name,
         email,
         password: hashedPassword,
+        provider: "local",
       },
     });
 
-    const token = generateToken(user.id);
-    res.status(201).json({ token, user });
+    const sanitizedUser = sanitizeUser(user);
+    res.redirect(`${process.env.CLIENT_APP_URL}//login-success?token=${token}`);
+    // res.status(201).json({ token, user: sanitizedUser });
   } catch (error) {
     res.status(500).json({ message: "server error" });
   }
@@ -49,10 +57,30 @@ const loginUser = async (req, res) => {
       return res.status(400).json({ message: "Invalid credentials" });
     const token = generateToken(user.id);
 
-    res.json({ token, user });
+    const sanitizedUser = sanitizeUser(user);
+    res.redirect(`${process.env.CLIENT_APP_URL}//login-success?token=${token}`);
+    // res.json({ token, user: sanitizedUser });
   } catch (error) {
     res.status(500).json({ message: "server error" });
   }
 };
 
-module.exports = { loginUser, registerUser };
+const thirdPartyAuthCallback = async (req, res) => {
+  try {
+    if (!req.user) {
+      console.log("No user found in req.user");
+      return res.status(400).json({ message: "Authentication failed" });
+    }
+    const { user } = req;
+    const token = generateToken(user.id);
+    const sanitizedUser = sanitizeUser(user);
+
+    res.redirect(`${process.env.CLIENT_APP_URL}//login-success?token=${token}`);
+    // res.status(200).json({ token, user: sanitizedUser });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "server error" });
+  }
+};
+
+module.exports = { loginUser, registerUser, thirdPartyAuthCallback };

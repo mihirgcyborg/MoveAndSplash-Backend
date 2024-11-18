@@ -1,40 +1,17 @@
 // services/messagesService.js
-const { dynamoDbClient } = require("../db/dynamoDbClient");
-const { PutItemCommand, QueryCommand } = require("@aws-sdk/client-dynamodb");
+const Message = require("../models/MongoDb/Message");
 
-const MESSAGES_TABLE = "ChatMessages";
-
-// 1. Send a Message
+// Send a message
 async function sendMessage(senderId, recipientId, message, timestamp) {
-  const params = {
-    TableName: MESSAGES_TABLE,
-    Item: {
-      messageId: { S: `${senderId}-${recipientId}-${timestamp}` },
-      senderId: { S: senderId },
-      recipientId: { S: recipientId },
-      message: { S: message },
-      timestamp: { N: timestamp.toString() },
-    },
-  };
-
-  const command = new PutItemCommand(params);
-  return await dynamoDbClient.send(command);
+  const newMessage = new Message({ senderId, recipientId, message, timestamp });
+  return await newMessage.save();
 }
 
-// 2. Get Messages by User IDs
+// Get messages between users
 async function getMessages(senderId, recipientId) {
-  const params = {
-    TableName: MESSAGES_TABLE,
-    KeyConditionExpression: "senderId = :s AND recipientId = :r",
-    ExpressionAttributeValues: {
-      ":s": { S: senderId },
-      ":r": { S: recipientId },
-    },
-  };
-
-  const command = new QueryCommand(params);
-  const result = await dynamoDbClient.send(command);
-  return result.Items || [];
+  return await Message.find({ senderId, recipientId })
+    .sort({ timestamp: 1 })
+    .exec();
 }
 
 module.exports = {

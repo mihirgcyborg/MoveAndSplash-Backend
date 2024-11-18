@@ -1,6 +1,6 @@
 const app = require("./app");
 const { prisma } = require("./db/prismaClient");
-const { dynamoDbClient } = require("./db/dynamoDbClient");
+const connectMongoDB = require("./db/mongoDbClient");
 const PORT = process.env.PORT || 5000;
 
 async function connectDatabase() {
@@ -16,7 +16,7 @@ async function connectDatabase() {
 // Start the server
 async function startServer() {
   await connectDatabase();
-
+  await connectMongoDB();
   app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
   });

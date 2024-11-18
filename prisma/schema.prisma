@@ -7,7 +7,7 @@
 // schema.prisma
 
 datasource db {
-  provider = "mysql"
+  provider = "postgresql"
   url      = env("DATABASE_URL") // Connection URL for MySQL
 }
 
@@ -17,16 +17,20 @@ generator client {
 
 // 1. Users Table
 model User {
-  id        Int       @id @default(autoincrement())
-  name      String
-  email     String    @unique
-  password  String
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  bookings  Booking[]
-  payments  Payment[]
-  places    Place[]
-  reviews   Review[]
+  id         Int       @id @default(autoincrement())
+  name       String
+  email      String    @unique
+  password   String?
+  provider   String // e.g., 'local', 'google', 'github', 'facebook'
+  providerId String? // ID returned by the third-party provider
+  bookings   Booking[]
+  payments   Payment[]
+  places     Place[]
+  reviews    Review[]
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@unique([provider, providerId])
 }
 
 // 2. Places Table

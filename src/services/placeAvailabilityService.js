@@ -1,9 +1,7 @@
-const { prisma } = require("../db/prismaClient");
-const { dynamoDbClient } = require("../db/dynamoDbClient");
-const { PutItemCommand, QueryCommand } = require("@aws-sdk/client-dynamodb");
+// services/placeAvailabilityService.js
+const PlaceAvailability = require("../models/MongoDb/PlaceAvailability");
 
-const TABLE_NAME = "PlaceAvailability";
-
+// Create availability
 async function createAvailability(
   placeId,
   availabilityDate,
@@ -11,32 +9,21 @@ async function createAvailability(
   endTime,
   isOpen
 ) {
-  const params = {
-    TableName: TABLE_NAME,
-    Item: {
-      placeId: { S: placeId },
-      availabilityDate: { S: availabilityDate },
-      startTime: { S: startTime },
-      endTime: { S: endTime },
-      isOpen: { BOOL: isOpen },
-    },
-  };
-  const command = new PutItemCommand(params);
-  return await dynamoDbClient.send(command);
+  const newAvailability = new PlaceAvailability({
+    placeId,
+    availabilityDate,
+    startTime,
+    endTime,
+    isOpen,
+  });
+  return await newAvailability.save();
 }
 
+// Get availability by place ID
 async function getAvailabilityByPlaceId(placeId) {
-  const params = {
-    TableName: TABLE_NAME,
-    KeyConditionExpression: "placeId = :p",
-    ExpressionAttributeValues: {
-      ":p": { S: placeId },
-    },
-  };
-
-  const command = new QueryCommand(params);
-  const result = await dynamoDbClient.send(command);
-  return result.Items || [];
+  return await PlaceAvailability.find({ placeId })
+    .sort({ availabilityDate: 1 })
+    .exec();
 }
 
 module.exports = {
