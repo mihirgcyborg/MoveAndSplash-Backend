@@ -4,6 +4,7 @@ const {
   loginUser,
   registerUser,
   thirdPartyAuthCallback,
+  checkUserExists,
 } = require("../controllers/authController");
 const router = express.Router();
 const passport = require("../strategies/passport");
@@ -13,11 +14,13 @@ const passport = require("../strategies/passport");
 router.post(
   "/register",
   [
-    check("name", "Name is required").not().isEmpty(),
+    check("firstName", "First Name is required").not().isEmpty(),
+    check("lastName", "Last Name is required").not().isEmpty(),
     check("email", "Please include a valid email").isEmail(),
     check("password", "Password should be 6 or more characters").isLength({
       min: 6,
     }),
+    check("dateOfBirth", "please provide valid date").isDate(),
   ],
   registerUser
 );
@@ -31,6 +34,14 @@ router.post(
     check("password", "Password is required").exists(),
   ],
   loginUser
+);
+
+// @route   POST /api/auth/checkUserExists
+// @desc    check user exists or not
+router.post(
+  "/checkUserExists",
+  [check("email", "Please include a valid email").isEmail()],
+  checkUserExists
 );
 
 // GitHub Authentication

@@ -8,7 +8,7 @@
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL") // Connection URL for MySQL
+  url      = "postgresql://movesplash_db_owner:tg1qmsO4dzWQ@ep-damp-morning-a1txe560.ap-southeast-1.aws.neon.tech/movesplash_db?sslmode=require" // Connection URL for MySQL
 }
 
 generator client {
@@ -17,18 +17,20 @@ generator client {
 
 // 1. Users Table
 model User {
-  id         Int       @id @default(autoincrement())
-  name       String
-  email      String    @unique
-  password   String?
-  provider   String // e.g., 'local', 'google', 'github', 'facebook'
-  providerId String? // ID returned by the third-party provider
-  bookings   Booking[]
-  payments   Payment[]
-  places     Place[]
-  reviews    Review[]
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
+  id          Int       @id @default(autoincrement())
+  firstName   String
+  lastName    String
+  email       String    @unique
+  password    String?
+  provider    String // e.g., 'local', 'google', 'github', 'facebook'
+  providerId  String? // ID returned by the third-party provider
+  bookings    Booking[]
+  payments    Payment[]
+  places      Place[]
+  reviews     Review[]
+  dateOfBirth DateTime
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   @@unique([provider, providerId])
 }
@@ -47,6 +49,8 @@ model Place {
   dailyRate        Float
   reviews          Review[] // Reviews for the place
   Booking          Booking[]
+  category         Category? @relation(fields: [categoryId], references: [id])
+  categoryId       Int
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 }
@@ -104,4 +108,13 @@ model Review {
   rating    Int // Rating out of 5
   comment   String? // Optional user comment
   createdAt DateTime @default(now())
+}
+
+model Category {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique // e.g., "Turf", "Swimming Pool"
+  icon      String // Icon name 
+  places    Place[] // Relationship to the Place table
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
